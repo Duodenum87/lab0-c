@@ -17,11 +17,26 @@
  */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *q = malloc(sizeof(struct list_head));
+    if (q == NULL)
+        return NULL;
+    INIT_LIST_HEAD(q);
+    return q;
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    if (l == NULL)
+        return;
+    while (list_empty(l) == false) {
+        struct list_head *n = l;
+        l = l->next;
+        list_del(n);
+        free(n);
+    }
+    free(l);
+}
 
 /*
  * Attempt to insert element at head of queue.
@@ -32,6 +47,22 @@ void q_free(struct list_head *l) {}
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (head == NULL)
+        return false;
+    element_t *newh = malloc(sizeof(element_t));
+    if (newh == NULL)
+        return false;
+    int l = strlen(s);
+    newh->value = malloc(sizeof(char) * (l + 1));
+    // one more byte for '\0'
+    if (newh->value == NULL) {
+        free(newh);
+        return false;
+    }
+    strncpy(newh->value, s, l);
+    newh->value[l] = '\0';
+    // set the string terminator
+    list_add(&newh->list, head);
     return true;
 }
 
@@ -44,9 +75,24 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (head == NULL)
+        return false;
+    element_t *newt = malloc(sizeof(element_t));
+    if (newt == NULL)
+        return false;
+    int l = strlen(s);
+    newt->value = malloc(sizeof(char) * (l + 1));
+    /* one more byte for '\0' */
+    if (newt->value == NULL) {
+        free(newt);
+        return false;
+    }
+    strncpy(newt->value, s, l);
+    // set the string terminator
+    newt->value[l] = '\0';
+    list_add_tail(&newt->list, head);
     return true;
 }
-
 /*
  * Attempt to remove element from head of queue.
  * Return target element.
@@ -63,6 +109,17 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (head == NULL || list_empty(head) || sp == NULL)
+        return NULL;
+    element_t *frptr = list_first_entry(head->next, element_t, list);
+    strncpy(sp, frptr->value, bufsize - 1);
+    sp[bufsize - 1] = '\0';
+    free(frptr->value);
+    // ptr redirect
+    struct list_head *n = head;
+    head->next = head->next->next;
+    list_del(n);
+    free(n);
     return NULL;
 }
 
@@ -72,6 +129,17 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (head == NULL || list_empty(head) || sp == NULL)
+        return NULL;
+    element_t *frptr = list_last_entry(head->next, element_t, list);
+    strncpy(sp, frptr->value, bufsize - 1);
+    sp[bufsize - 1] = '\0';
+    free(frptr->value);
+    // ptr redirect
+    struct list_head *n = head;
+    head->next = head->next->next;
+    list_del(n);
+    free(n);
     return NULL;
 }
 
@@ -113,6 +181,7 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+
     return true;
 }
 
