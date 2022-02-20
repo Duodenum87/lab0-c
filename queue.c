@@ -29,11 +29,10 @@ void q_free(struct list_head *l)
 {
     if (l == NULL)
         return;
-    while (list_empty(l) == false) {
-        struct list_head *n = l;
-        l = l->next;
-        list_del(n);
-        free(n);
+    element_t *ele, *tmp;
+    list_for_each_entry_safe (ele, tmp, l, list) {
+        free(ele->value);
+        free(ele);
     }
     free(l);
 }
