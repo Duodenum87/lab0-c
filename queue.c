@@ -108,18 +108,17 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (head == NULL || list_empty(head) || sp == NULL)
+    if (head == NULL || list_empty(head))
         return NULL;
-    element_t *frptr = list_first_entry(head->next, element_t, list);
-    strncpy(sp, frptr->value, bufsize - 1);
-    sp[bufsize - 1] = '\0';
-    free(frptr->value);
+    element_t *fptr = list_first_entry(head, element_t, list);
     // ptr redirect
-    struct list_head *n = head;
-    head->next = head->next->next;
-    list_del(n);
-    free(n);
-    return NULL;
+    list_del(head->next);
+    // to copy string
+    if (sp != NULL) {
+        strncpy(sp, fptr->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
+    return fptr;
 }
 
 /*
@@ -128,19 +127,19 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (head == NULL || list_empty(head) || sp == NULL)
+    if (head == NULL || list_empty(head))
         return NULL;
-    element_t *frptr = list_last_entry(head->next, element_t, list);
-    strncpy(sp, frptr->value, bufsize - 1);
-    sp[bufsize - 1] = '\0';
-    free(frptr->value);
+    element_t *fptr = list_last_entry(head, element_t, list);
     // ptr redirect
-    struct list_head *n = head;
-    head->next = head->next->next;
-    list_del(n);
-    free(n);
-    return NULL;
+    list_del(head->prev);
+    // to copy string
+    if (sp != NULL) {
+        strncpy(sp, fptr->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
+    return fptr;
 }
+
 
 /*
  * WARN: This is for external usage, don't modify it
