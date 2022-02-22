@@ -179,7 +179,16 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
-
+    if (head == NULL || list_empty(head))
+        return false;
+    struct list_head *fast = head->next->next, *slow = head->next;
+    while (fast != head && fast->next != head) {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+    element_t *ele = list_entry(slow, element_t, list);
+    list_del(slow);
+    q_release_element(ele);
     return true;
 }
 
@@ -195,6 +204,19 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (head == NULL || list_empty(head))
+        return false;
+    char *cmp = NULL;
+    element_t *ele = NULL, *tmp = NULL;
+    list_for_each_entry_safe (ele, tmp, head, list) {
+        if (strcmp(cmp, ele->value) == 0 && cmp) {
+            list_del(&ele->list);
+            free(ele->value);
+            free(ele);
+        } else {
+            cmp = ele->value;
+        }
+    }
     return true;
 }
 
@@ -204,6 +226,15 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (head == NULL || list_empty(head))
+        return;
+    struct list_head *i;
+    list_for_each (i, head) {
+        // to identify odd list count
+        if (i->next == head)
+            break;
+        list_move(i, i->next);
+    }
 }
 
 /*
@@ -213,7 +244,15 @@ void q_swap(struct list_head *head)
  * (e.g., by calling q_insert_head, q_insert_tail, or q_remove_head).
  * It should rearrange the existing ones.
  */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (head == NULL || list_empty(head))
+        return;
+    struct list_head *i;
+    for (i = head; i->next != head->prev; i = i->next) {
+        list_move(head->prev, i);
+    }
+}
 
 /*
  * Sort elements of queue in ascending order
