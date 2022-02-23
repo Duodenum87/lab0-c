@@ -259,4 +259,55 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+struct list_head *list_merge(struct list_head *l1, struct list_head *l2)
+{
+    if (l1 == NULL)
+        return l2;
+    if (l2 == NULL)
+        return l1;
+
+    element_t *n1 = list_entry(l1, element_t, list);
+    element_t *n2 = list_entry(l2, element_t, list);
+    if (strcmp(n1->value, n2->value) < 0) {
+        l1->next = list_merge(l1->next, l2);
+        return l1;
+    } else {
+        l2->next = list_merge(l1, l2->next);
+        return l2;
+    }
+}
+
+struct list_head *list_spilt(struct list_head *head)
+{
+    if (head == NULL || list_empty(head))
+        return head;
+    struct list_head *fast = head->next->next, *slow = head->next;
+    while (fast != head && fast->next != head) {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+    fast = slow;
+    slow->prev->next = NULL;
+    // to merge sperately
+    struct list_head *l1 = list_spilt(head);
+    struct list_head *l2 = list_spilt(fast);
+
+    return list_merge(l1, l2);
+}
+
+void q_sort(struct list_head *head)
+{
+    //
+    if (head == NULL || list_empty(head) || list_is_singular(head))
+        return;
+    head->prev->next = NULL;
+    head->next = list_spilt(head->next);
+
+    struct list_head *i = head;
+    while (i->next != NULL) {
+        i->next->prev = i;
+        i = i->next;
+    }
+    head->prev = i;
+    i->next = head;
+}
