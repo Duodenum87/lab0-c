@@ -279,25 +279,23 @@ struct list_head *list_merge(struct list_head *l1, struct list_head *l2)
 
 struct list_head *list_spilt(struct list_head *head)
 {
-    if (head == NULL || list_empty(head))
+    if (head == NULL || head->next == NULL)
         return head;
-    struct list_head *fast = head->next->next, *slow = head->next;
-    while (fast != head && fast->next != head) {
-        fast = fast->next->next;
+    struct list_head *fast = head->next, *slow = head;
+    while (fast && fast->next) {
         slow = slow->next;
+        fast = fast->next->next;
     }
-    fast = slow;
-    slow->prev->next = NULL;
+    fast = slow->next;
+    slow->next = NULL;
     // to merge sperately
     struct list_head *l1 = list_spilt(head);
     struct list_head *l2 = list_spilt(fast);
-
     return list_merge(l1, l2);
 }
 
 void q_sort(struct list_head *head)
 {
-    //
     if (head == NULL || list_empty(head) || list_is_singular(head))
         return;
     head->prev->next = NULL;
