@@ -204,15 +204,16 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-    if (head == NULL || list_empty(head))
+    if (head == NULL)
         return false;
     char *cmp = NULL;
     element_t *ele = NULL, *tmp = NULL;
     list_for_each_entry_safe (ele, tmp, head, list) {
-        if (strcmp(cmp, ele->value) == 0 && cmp) {
+        if (!cmp)
+            cmp = ele->value;
+        if (strcmp(cmp, ele->value) == 0) {
             list_del(&ele->list);
-            free(ele->value);
-            free(ele);
+            q_release_element(ele);
         } else {
             cmp = ele->value;
         }
@@ -281,6 +282,7 @@ struct list_head *list_spilt(struct list_head *head)
 {
     if (head == NULL || head->next == NULL)
         return head;
+    // find the middle node to spilt
     struct list_head *fast = head->next, *slow = head;
     while (fast && fast->next) {
         slow = slow->next;
@@ -288,7 +290,7 @@ struct list_head *list_spilt(struct list_head *head)
     }
     fast = slow->next;
     slow->next = NULL;
-    // to merge sperately
+    // merge sperately
     struct list_head *l1 = list_spilt(head);
     struct list_head *l2 = list_spilt(fast);
     return list_merge(l1, l2);
@@ -298,14 +300,17 @@ void q_sort(struct list_head *head)
 {
     if (head == NULL || list_empty(head) || list_is_singular(head))
         return;
+    // unlink the end node
     head->prev->next = NULL;
     head->next = list_spilt(head->next);
 
-    struct list_head *i = head;
-    while (i->next != NULL) {
-        i->next->prev = i;
-        i = i->next;
+    // relink the ptr of list
+    struct list_head *node = head;
+    while (node->next != NULL) {
+        node->next->prev = node;
+        node = node->next;
     }
-    head->prev = i;
-    i->next = head;
+    // relink the end node
+    head->prev = node;
+    node->next = head;
 }
