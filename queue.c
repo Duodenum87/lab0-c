@@ -1,9 +1,9 @@
+#include "queue.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "harness.h"
-#include "queue.h"
 
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
  * but some of them cannot occur. You can suppress them by adding the
@@ -112,9 +112,9 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
     element_t *fptr = list_first_entry(head, element_t, list);
     // ptr redirect
-    list_del(head->next);
+    list_del(&fptr->list);
     // to copy string
-    if (sp != NULL) {
+    if (bufsize) {
         strncpy(sp, fptr->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
@@ -131,9 +131,9 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
     element_t *fptr = list_last_entry(head, element_t, list);
     // ptr redirect
-    list_del(head->prev);
+    list_del(&fptr->list);
     // to copy string
-    if (sp != NULL) {
+    if (bufsize) {
         strncpy(sp, fptr->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
@@ -262,20 +262,23 @@ void q_reverse(struct list_head *head)
  */
 struct list_head *list_merge(struct list_head *l1, struct list_head *l2)
 {
-    if (l1 == NULL)
-        return l2;
-    if (l2 == NULL)
-        return l1;
-
-    element_t *n1 = list_entry(l1, element_t, list);
-    element_t *n2 = list_entry(l2, element_t, list);
-    if (strcmp(n1->value, n2->value) < 0) {
-        l1->next = list_merge(l1->next, l2);
-        return l1;
-    } else {
-        l2->next = list_merge(l1, l2->next);
-        return l2;
+    struct list_head *head = NULL;
+    struct list_head **ptr = &head, **node = NULL;
+    for (; l1 && l2; *node = (*node)->next) {
+        element_t *n1 = list_entry(l1, element_t, list);
+        element_t *n2 = list_entry(l2, element_t, list);
+        if (strcmp(n1->value, n2->value) < 0) {
+            node = &l1;
+            *ptr = *node;
+            ptr = &(*ptr)->next;
+        } else {
+            node = &l2;
+            *ptr = *node;
+            ptr = &(*ptr)->next;
+        }
     }
+    *ptr = (struct list_head *) ((uintptr_t) l1 | (uintptr_t) l2);
+    return head;
 }
 
 struct list_head *list_spilt(struct list_head *head)
