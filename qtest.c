@@ -548,6 +548,51 @@ static bool do_reverse(int argc, char *argv[])
     return !error_check();
 }
 
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes 0 arguments", argv[0]);
+        return false;
+    }
+
+    if (l_meta.l == NULL) {
+        report(3, "Warning: Calling shuffle on null queue");
+        return false;
+    }
+
+    int cnt = q_size(l_meta.l);
+    if (cnt < 2) {
+        report(3, "Warning: Calling shuffle on single node queue");
+        return false;
+    }
+
+    set_noallocate_mode(true);
+    if (exception_setup(true)) {
+        // to iterate from tail to head
+        struct list_head *swaper = l_meta.l->prev;
+        for (; --cnt; swaper = swaper->prev) {
+            int r = rand() % cnt + 1;
+            struct list_head *curr = l_meta.l->next;
+
+            for (int i = 0; i < r; i++) {
+                curr = curr->next;
+            }
+
+            element_t *c = list_entry(curr, element_t, list);
+            element_t *s = list_entry(swaper, element_t, list);
+            char *tmp = c->value;
+            c->value = s->value;
+            s->value = tmp;
+        }
+    }
+    exception_cancel();
+    set_noallocate_mode(false);
+
+    show_queue(3);
+
+    return !error_check();
+}
+
 static bool do_size(int argc, char *argv[])
 {
     if (argc != 1 && argc != 2) {
@@ -795,6 +840,7 @@ static void console_init()
         dedup, "                | Delete all nodes that have duplicate string");
     ADD_COMMAND(swap,
                 "                | Swap every two adjacent nodes in queue");
+    ADD_COMMAND(shuffle, "                | reorder all nodes randomly");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",
